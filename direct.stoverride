@@ -1,14 +1,31 @@
-name: "🚀 个人修正：国内 App 直连"
+name: "🚀 个人修正：国内 App 与 Apple 全家桶"
 desc: |-
-  修复小红书图片加载、通义千问无法访问等问题。
+  修复小红书图片加载、通义千问无法访问、Apple 国内服务 (含 Music) 加速。
   优先级高于主配置，确保国内流量走 DIRECT。
 author: "Gemini Assistant"
 icon: "https://raw.githubusercontent.com/clash-verge-rev/clash-verge-rev/main/src/assets/icons/apple-logo.png"
-date: "2026-03-26 01:00:00"
-version: "1.0.0"
+date: "2026-03-26 16:00:00"
+version: "1.2.0"
 
 rules:
-  # > 小红书 (Xiaohongshu) - 修复图片、视频分流
+  # > Apple 中国区服务（App Store, iCloud, 系统更新）
+  - DOMAIN-SUFFIX,apple.com,DIRECT
+  - DOMAIN-SUFFIX,icloud.com,DIRECT
+  - DOMAIN-SUFFIX,mzstatic.com,DIRECT
+  - DOMAIN-SUFFIX,itunes.apple.com,DIRECT
+  - DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT
+  - DOMAIN-SUFFIX,aaplimg.com,DIRECT
+  - DOMAIN-SUFFIX,cdn-apple.com,DIRECT
+  - DOMAIN-SUFFIX,digicert.com,DIRECT
+  - DOMAIN-KEYWORD,apple-support,DIRECT
+
+  # > Apple Music 加速 (修复切歌卡顿、封面显示慢)
+  - DOMAIN-SUFFIX,music.apple.com,DIRECT
+  - DOMAIN-SUFFIX,itunes.com,DIRECT
+  - DOMAIN-KEYWORD,apple-music,DIRECT
+  - DOMAIN-KEYWORD,audio-ak-spotify,DIRECT # 部分旧版音乐资源引用
+
+  # > 小红书 (Xiaohongshu)
   - DOMAIN-SUFFIX,xiaohongshu.com,DIRECT
   - DOMAIN-SUFFIX,xhsedge.com,DIRECT
   - DOMAIN-SUFFIX,xhslink.com,DIRECT
@@ -19,26 +36,25 @@ rules:
   - DOMAIN-SUFFIX,alibabacloud.com,DIRECT
   - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
   - DOMAIN-KEYWORD,qwen,DIRECT
-  - DOMAIN-KEYWORD,alibaba,DIRECT
 
-  # > 腾讯 (Tencent / WeChat)
+  # > 腾讯/微信 (WeChat)
   - DOMAIN-SUFFIX,servicewechat.com,DIRECT
   - DOMAIN-SUFFIX,wechat.com,DIRECT
   - DOMAIN-SUFFIX,tencent.com,DIRECT
   - DOMAIN-SUFFIX,qq.com,DIRECT
 
-  # > 阿里巴巴 (Alibaba / Taobao)
+  # > 阿里/淘宝 (Alibaba / Taobao / Amap)
   - DOMAIN-SUFFIX,taobao.com,DIRECT
   - DOMAIN-SUFFIX,tmall.com,DIRECT
   - DOMAIN-SUFFIX,alicdn.com,DIRECT
   - DOMAIN-SUFFIX,amap.com,DIRECT
 
-  # > 字节跳动 (ByteDance / Douyin)
+  # > 字节/抖音 (ByteDance / Douyin)
   - DOMAIN-SUFFIX,snssdk.com,DIRECT
   - DOMAIN-SUFFIX,amemv.com,DIRECT
   - DOMAIN-SUFFIX,byteintl.com,DIRECT
 
-  # > 其他常用国内修正
+  # > 其他常用国内修正 (京东, 百度, 拼多多, 美团, 12306)
   - DOMAIN-SUFFIX,jd.com,DIRECT
   - DOMAIN-SUFFIX,pinduoduo.com,DIRECT
   - DOMAIN-SUFFIX,baidu.com,DIRECT
@@ -50,3 +66,4 @@ rules:
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+
