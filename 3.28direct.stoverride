@@ -1,25 +1,23 @@
-name: "🚀 个人去广告与国内修正集成"
+name: "🚀 个人修正：国内 App 优化与去广告"
 desc: |-
-  集成：贴吧、酷安、闲鱼、中国联通去广告脚本，以及国内常用 App/Apple 直连分流。
-  适配：Stash Override 格式 (YAML)。
+  修复贴吧无网络问题。
+  逻辑：核心域名走 DIRECT，广告交给 Scripting 处理。
 author: "Gemini Assistant & Xianzhen"
 icon: "https://raw.githubusercontent.com/clash-verge-rev/clash-verge-rev/main/src/assets/icons/apple-logo.png"
-date: "2026-03-27 17:35:00"
-version: "1.5.0"
+date: "2026-03-28 01:40:00"
+version: "1.5.1"
 
-# > 1. 域名解密 (MITM) - 脚本生效的前提
+# > 1. 域名解密 (必须要开 MITM 脚本才有用)
 mitm:
   hostname:
     - "tiebac.baidu.com"
     - "c.tieba.baidu.com"
     - "api.coolapk.com"
     - "m.client.10010.com"
-    - "img.client.10010.com"
     - "acs.m.goofish.com"
-    - "g-acs.m.goofish.com"
     - "*.goofish.com"
 
-# > 2. 脚本重写 (Scripting) - 对应你发的 JS 逻辑
+# > 2. 脚本重写 (处理 App 内部广告)
 scripting:
   - name: "百度贴吧去广告-JSON"
     type: http-response
@@ -39,45 +37,30 @@ scripting:
     script-url: "https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js"
     requires-body: true
 
-  - name: "闲鱼重写"
-    type: http-response
-    pattern: "^https?://(g-)?acs\\.m\\.goofish\\.com/gw/mtop"
-    script-url: "https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js"
-    requires-body: true
-
-# > 3. 分流规则 (Rules) - 优先级最高
+# > 3. 分流规则 (Rules)
 rules:
-  # 广告拒绝 (REJECT)
+  # --- 广告屏蔽 (仅屏蔽纯广告域名) ---
   - DOMAIN-SUFFIX,ad.10010.com,REJECT
   - DOMAIN-SUFFIX,iyes.youku.com,REJECT
-  - DOMAIN,tiebac.baidu.com,REJECT
+  # 注意：千万不要 REJECT tiebac.baidu.com
 
-  # 国内服务与 Apple 全家桶直连 (DIRECT)
-  - DOMAIN-SUFFIX,apple.com,DIRECT
-  - DOMAIN-SUFFIX,apple.com.cn,DIRECT
-  - DOMAIN-SUFFIX,icloud.com,DIRECT
-  - DOMAIN-SUFFIX,icloud.com.cn,DIRECT
-  - DOMAIN-SUFFIX,mzstatic.com,DIRECT
-  - DOMAIN-KEYWORD,apple-music,DIRECT
-  
-  # 旅游与生活 (航旅、携程、飞猪、去哪儿、招行)
-  - DOMAIN-SUFFIX,umetrip.com,DIRECT
-  - DOMAIN-SUFFIX,ctrip.com,DIRECT
-  - DOMAIN-SUFFIX,qunar.com,DIRECT
-  - DOMAIN-SUFFIX,feizhu.com,DIRECT
-  - DOMAIN-SUFFIX,cmbchina.com,DIRECT
-  
-  # 社交与办公 (贴吧、酷安、飞书、小红书)
+  # --- 核心 App 直连 (确保网络畅通) ---
+  - DOMAIN,tiebac.baidu.com,DIRECT        # 贴吧数据接口，必须直连
+  - DOMAIN,c.tieba.baidu.com,DIRECT
   - DOMAIN-SUFFIX,baidu.com,DIRECT
-  - DOMAIN-SUFFIX,coolapk.com,DIRECT
+  - DOMAIN-SUFFIX,coolapk.com,DIRECT      # 酷安数据接口
+  - DOMAIN-SUFFIX,apple.com,DIRECT        # Apple 全家桶
+  - DOMAIN-SUFFIX,icloud.com,DIRECT
+  - DOMAIN-SUFFIX,mzstatic.com,DIRECT
+  
+  # --- 其他常用直连 ---
   - DOMAIN-SUFFIX,feishu.cn,DIRECT
   - DOMAIN-SUFFIX,xiaohongshu.com,DIRECT
-  - DOMAIN-SUFFIX,idlefish.com,DIRECT
-
-  # 基础大厂与局域网
-  - DOMAIN-SUFFIX,tencent.com,DIRECT
-  - DOMAIN-SUFFIX,qq.com,DIRECT
-  - DOMAIN-SUFFIX,taobao.com,DIRECT
-  - DOMAIN-SUFFIX,jd.com,DIRECT
+  - DOMAIN-SUFFIX,cmbchina.com,DIRECT
+  - DOMAIN-SUFFIX,meituan.com,DIRECT
+  - DOMAIN-SUFFIX,10010.com,DIRECT
+  
+  # --- 局域网 ---
   - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
