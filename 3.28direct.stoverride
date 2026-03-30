@@ -1,43 +1,182 @@
-name: "🚀 个人修正：国内 App 优化与去广告"
-desc: |-
-  修复贴吧无网络问题。
-  逻辑：核心域名走 DIRECT，广告交给 Scripting 处理。
-author: "Gemini Assistant & Xianzhen"
-icon: "https://raw.githubusercontent.com/clash-verge-rev/clash-verge-rev/main/src/assets/icons/apple-logo.png"
-date: "2026-03-28 01:40:00"
-version: "1.5.1"
+#!name=🚀 个人修正：国内 App 优化与去广告
+#!desc=修复贴吧无网络问题。逻辑：核心域名走 DIRECT，广告交给 Scripting 处理。
+#!author=Gemini Assistant & Xianzhen
+#!icon=https://raw.githubusercontent.com/clash-verge-rev/clash-verge-rev/main/src/assets/icons/apple-logo.png
+#!date=2026-03-28 01:40:00
+#!version=1.5.1
 
-# > 1. 域名解密 (必须要开 MITM 脚本才有用)
-mitm:
-  hostname:
+# ==========================================
+# 1. 域名解密 (MITM)
+# ==========================================
+http:
+  mitm:
     - "tiebac.baidu.com"
     - "c.tieba.baidu.com"
     - "api.coolapk.com"
     - "m.client.10010.com"
     - "acs.m.goofish.com"
     - "*.goofish.com"
+    # 额外添加的去广告域名
+    - "acs.m.taobao.com"
+    - "guide-acs.m.taobao.com"
+    - "*.cainiao.com"
+    - "api.m.jd.com"
+    - "ms.jr.jd.com"
+    - "bdsp-x.jd.com"
+    - "dsp-x.jd.com"
+    - "api.yangkeduo.com"
+    - "api.pinduoduo.com"
+    - "*.amap.com"
+    - "amap-aos-info-nogw.amap.com"
+    - "optimus-ads.amap.com"
+    - "m.ctrip.com"
+    - "ma-adx.ctrip.com"
+    - "client.qunar.com"
+    - "homefront.qunar.com"
+    - "pan.baidu.com"
+    - "issuecdn.baidupcs.com"
 
-# > 2. 脚本重写 (处理 App 内部广告)
-scripting:
-  - name: "百度贴吧去广告-JSON"
-    type: http-response
-    pattern: "^https?://(tiebac|c\\.tieba)\\.baidu\\.com/(c/(s/sync|f/(ad/getSplashAd|frs/(page|threadlist|generalTabList)|pb/(pic)?page|excellent/personalized))$|tiebaads/commonbatch\\?)"
-    script-url: "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-json.js"
-    requires-body: true
+# ==========================================
+# 2. 脚本重写 (Scripting)
+# ==========================================
+  script:
+    # --- 百度贴吧 ---
+    - match: ^https?://(tiebac|c\.tieba)\.baidu\.com/(c/(s/sync|f/(ad/getSplashAd|frs/(page|threadlist|generalTabList)|pb/(pic)?page|excellent/personalized))$|tiebaads/commonbatch\?)
+      name: 百度贴吧去广告-JSON
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?://(tiebac|c\.tieba)\.baidu\.com/c/(b/ad/adBid|f/(frs/(page|threadlist|generalTabList)|ad/getFeedAd|pb/page|excellent/personalized))\?cmd
+      name: 百度贴吧去广告-Proto
+      type: response
+      require-body: true
+      timeout: 10
 
-  - name: "百度贴吧去广告-Proto"
-    type: http-response
-    pattern: "^https?://(tiebac|c\\.tieba)\\.baidu\\.com/c/(b/ad/adBid|f/(frs/(page|threadlist|generalTabList)|ad/getFeedAd|pb/page|excellent/personalized))\\?cmd"
-    script-url: "https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js"
-    requires-body: true
+    # --- 酷安 ---
+    - match: ^https?://api\.coolapk\.com/v6/(main/(init|indexV8)|dataList|feed/(replyList|detail)|page/dataList)
+      name: 酷安去广告
+      type: response
+      require-body: true
+      timeout: 10
 
-  - name: "酷安去广告"
-    type: http-response
-    pattern: "^https?://api\\.coolapk\\.com/v6/(main/(init|indexV8)|dataList|feed/(replyList|detail)|page/dataList)"
-    script-url: "https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js"
-    requires-body: true
+    # --- 淘宝 ---
+    - match: ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alibaba\.advertisementservice\.getadv\/
+      name: 淘宝广告1
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alimama\.etao\.config\.query\/.+?etao_advertise
+      name: 淘宝广告2
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get
+      name: 淘宝开屏
+      type: response
+      require-body: true
+      timeout: 10
 
-# > 3. 分流规则 (Rules)
+    # --- 京东 ---
+    - match: ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(start|queryMaterialAdverts)
+      name: 京东开屏
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/api\.m\.jd\.com\/api\?functionId=delivery_show
+      name: 京东广告1
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(hotWords|hotSearchTerms)
+      name: 京东热搜
+      type: response
+      require-body: true
+      timeout: 10
+
+    # --- 拼多多 ---
+    - match: ^https?:\/\/api\.(pinduoduo|yangkeduo)\.com\/api\/cappuccino\/splash
+      name: 拼多多开屏
+      type: response
+      require-body: true
+      timeout: 10
+
+    # --- 高德地图 ---
+    - match: ^https?:\/\/.*\.amap\.com\/ws\/valueadded\/alimama\/splash_screen
+      name: 高德开屏
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/.*\.amap\.com\/ws\/message\/notice\/list
+      name: 高德消息
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/.*\.amap\.com\/ws\/shield\/search\/nearbyrec_smart
+      name: 高德推荐
+      type: response
+      require-body: true
+      timeout: 10
+    - match: ^https?:\/\/.*\.amap\.com\/ws\/promotion-web\/resource
+      name: 高德推广
+      type: response
+      require-body: true
+      timeout: 10
+
+    # --- 携程 ---
+    - match: ^https?:\/\/m\.ctrip\.com\/restapi\/soa2\/\d+\/scjson\/tripAds
+      name: 携程广告
+      type: response
+      require-body: true
+      timeout: 10
+
+    # --- 去哪儿旅行 ---
+    - match: ^https?:\/\/client\.qunar\.com\/pitcher-proxy\?qrt=p_splashAd
+      name: 去哪儿开屏
+      type: response
+      require-body: true
+      timeout: 10
+
+    # --- 百度网盘 ---
+    - match: ^https?:\/\/pan\.baidu\.com\/rest\/\d\.\d\/pcs\/ad
+      name: 网盘广告1
+      type: response
+      require-body: true
+      timeout: 10
+
+# ==========================================
+# 3. URL 重写 (Rewrite)
+# ==========================================
+  rewrite:
+    # --- 广告屏蔽 ---
+    - ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alibaba\.advertisementservice\.getadv\/ - reject-200
+    - ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.alimama\.etao\.config\.query\/.+?etao_advertise - reject-200
+    - ^https?:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.splash\.awesome\.get - reject-200
+    - ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.film\.mtopadvertiseapi\.queryadvertise\/ - reject-200
+    - ^https?:\/\/acs\.m\.taobao\.com\/gw\/mtop\.damai\.wireless\.home\.welcome\/ - reject-200
+    - ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(start|queryMaterialAdverts) - reject-200
+    - ^https?:\/\/(bdsp-x|dsp-x)\.jd\.com\/adx\/ - reject-200
+    - ^https?:\/\/ms\.jr\.jd\.com\/gw\/generic\/aladdin\/(new)?na\/m\/getLoadingPicture - reject-200
+    - ^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=home_launchConfig - reject-200
+    - ^https?:\/\/api\.(pinduoduo|yangkeduo)\.com\/api\/cappuccino\/splash - reject-200
+    - ^https?:\/\/.*\.amap\.com\/ws\/valueadded\/alimama\/splash_screen - reject-200
+    - ^https?:\/\/optimus-ads\.amap\.com\/uploadimg\/[a-zA-Z0-9]+\.gif - reject-200
+    - ^https?:\/\/.*\.amap\.com\/ws\/message\/notice\/list - reject-dict
+    - ^https?:\/\/.*\.amap\.com\/ws\/shield\/search\/new_hotword - reject-dict
+    - ^https?:\/\/.*\.amap\.com\/ws\/shield\/scene\/recommend - reject-dict
+    - ^https?:\/\/amap-aos-info-nogw\.amap\.com\/ws\/aos\/alimama\/ - reject-200
+    - ^https?:\/\/api\.coolapk\.com\/v6\/search\?.*type=hotSearch - reject-dict
+    - ^https?:\/\/m\.ctrip\.com\/restapi\/[\w/]+tripAds - reject-200
+    - ^https:\/\/ma-adx\.ctrip\.com\/_ma\.gif - reject-200
+    - ^https:\/\/homefront\.qunar\.com\/front\/splash\/ad - reject-200
+    - ^https?:\/\/client\.qunar\.com\/pitcher-proxy\?qrt=p_splashAd - reject-200
+    - ^https?:\/\/pan\.baidu\.com\/act\/api\/activityentry - reject-200
+    - ^https?:\/\/pan\.baidu\.com\/act\/v\d\/(bchannel|welfare)\/list - reject-200
+    - ^https?:\/\/pan\.baidu\.com\/rest\/\d\.\d\/pcs\/ad - reject-200
+    - ^https?:\/\/issuecdn\.baidupcs\.com\/issue\/netdisk\/guanggao - reject-200
+
+# ==========================================
+# 4. 分流规则 (Rules)
+# ==========================================
 rules:
   # --- 广告屏蔽 (仅屏蔽纯广告域名) ---
   - DOMAIN-SUFFIX,ad.10010.com,REJECT
@@ -52,15 +191,71 @@ rules:
   - DOMAIN-SUFFIX,apple.com,DIRECT        # Apple 全家桶
   - DOMAIN-SUFFIX,icloud.com,DIRECT
   - DOMAIN-SUFFIX,mzstatic.com,DIRECT
-  
+
   # --- 其他常用直连 ---
   - DOMAIN-SUFFIX,feishu.cn,DIRECT
   - DOMAIN-SUFFIX,xiaohongshu.com,DIRECT
   - DOMAIN-SUFFIX,cmbchina.com,DIRECT
   - DOMAIN-SUFFIX,meituan.com,DIRECT
   - DOMAIN-SUFFIX,10010.com,DIRECT
-  
+
   # --- 局域网 ---
   - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+
+# ==========================================
+# 5. 脚本源 (Script Providers)
+# ==========================================
+script-providers:
+  百度贴吧去广告-JSON:
+    url: https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-json.js
+    interval: 86400
+  百度贴吧去广告-Proto:
+    url: https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js
+    interval: 86400
+  酷安去广告:
+    url: https://github.com/ddgksf2013/Scripts/raw/master/coolapk.js
+    interval: 86400
+  淘宝广告1:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+    interval: 86400
+  淘宝广告2:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+    interval: 86400
+  淘宝开屏:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+    interval: 86400
+  京东开屏:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/startup.js
+    interval: 86400
+  京东广告1:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/startup.js
+    interval: 86400
+  京东热搜:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/jd_json.js
+    interval: 86400
+  拼多多开屏:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/startup.js
+    interval: 86400
+  高德开屏:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+    interval: 86400
+  高德消息:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+    interval: 86400
+  高德推荐:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+    interval: 86400
+  高德推广:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+    interval: 86400
+  携程广告:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/startup.js
+    interval: 86400
+  去哪儿开屏:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/startup.js
+    interval: 86400
+  网盘广告1:
+    url: https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/startup.js
+    interval: 86400
